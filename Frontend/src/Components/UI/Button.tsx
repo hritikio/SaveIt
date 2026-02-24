@@ -1,34 +1,43 @@
 import type { ReactElement } from "react";
 
-interface buttonprops{
-    variant:"primary" |"secondary";
-    size:"sm"| "md"|"lg",
-    text:string,
-    startIcon?:ReactElement,
-    endIcon?:ReactElement,
-    onClick:()=>void;
-
+interface ButtonProps {
+  variant: "primary" | "secondary";
+  size: "sm" | "md" | "lg";
+  text: string;
+  startIcon?: ReactElement;
+  endIcon?: ReactElement;
+  onClick: () => void;
+  disabled?: boolean;
 }
 
-const variantStyles={
-  "primary":"bg-purple-600 text-white",
-  "secondary":"bg-purple-300 text-purple-600"
+const variantStyles = {
+  primary:
+    "bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg",
+  secondary: "bg-purple-100 hover:bg-purple-200 text-purple-700",
+};
 
-}
+const sizeStyles = {
+  sm: "px-3 py-1.5 text-sm",
+  md: "px-5 py-2.5 text-base",
+  lg: "px-7 py-3.5 text-lg",
+};
 
-const defaultStyles="rounded-md flex m-4  ";
-
-const sizeStyles={
-  "sm":"px-2 py-1",
-  "md":"px-4 py-2",
-  "lg":"px-6  py-4",
-}
- 
-export const Button=(props:buttonprops)=>{
- return (
-   <>
-     <button onClick={props.onClick} className={`${variantStyles[props.variant]}  ${defaultStyles} ${sizeStyles[props.size]}  `} >
-      {props.startIcon? <div className="pr-2">{props.startIcon}</div>:null } {props.text} {props.endIcon}</button>
-   </>
- );
-}
+export const Button = (props: ButtonProps) => {
+  return (
+    <button
+      onClick={props.onClick}
+      disabled={props.disabled}
+      className={`
+        ${variantStyles[props.variant]} 
+        ${sizeStyles[props.size]} 
+        rounded-lg font-medium transition-all duration-200
+        flex items-center justify-center gap-2 w-full
+        disabled:opacity-50 disabled:cursor-not-allowed
+      `}
+    >
+      {props.startIcon && <span>{props.startIcon}</span>}
+      <span>{props.text}</span>
+      {props.endIcon && <span>{props.endIcon}</span>}
+    </button>
+  );
+};

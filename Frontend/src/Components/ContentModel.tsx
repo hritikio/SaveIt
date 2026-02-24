@@ -16,6 +16,7 @@ const ContentModel = ({ open, onClose }: ContentModelProps) => {
   const titleref = useRef<HTMLInputElement>(null);
   const linkref = useRef<HTMLInputElement>(null);
   const [type, settype] = useState<ContentType>("Youtube");
+  const [loading, setLoading] = useState(false);
 
   async function addcontent() {
     const title = titleref.current?.value;
@@ -32,6 +33,7 @@ const ContentModel = ({ open, onClose }: ContentModelProps) => {
       return;
     }
 
+    setLoading(true);
     try {
       await axios.post(
         `${BACKEND_URL}/api/v1/content`,
@@ -46,70 +48,93 @@ const ContentModel = ({ open, onClose }: ContentModelProps) => {
           },
         },
       );
-      alert("Content added successfully!");
       // Clear form fields
       if (titleref.current) titleref.current.value = "";
       if (linkref.current) linkref.current.value = "";
       settype("Youtube");
       onClose();
     } catch (error: any) {
-      console.error("Error adding content:", error.response?.data);
       if (error.response?.status === 403) {
         alert("Session expired. Please sign in again.");
       } else {
         alert(error.response?.data?.msg || "Failed to add content");
       }
+    } finally {
+      setLoading(false);
     }
   }
 
+  if (!open) return null;
+
   return (
-    <div>
-      {open && (
-        <div className="w-screen h-screen bg-slate-500 fixed top-0 left-0 opacity-80 flex justify-center text-black">
-          <div className="flex flex-col justify-center">
-            <span className="bg-white p-4 rounded opacit-100">
-              <div className="flex justify-end">
-                <div onClick={onClose} className="cursor-pointer">
-                  <CrossIcon />
-                </div>
-              </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-800">Add Content</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <CrossIcon />
+          </button>
+        </div>
 
-              <div>
-                <Input placeholder={"Title"} ref={titleref} />
-                <Input placeholder={"Link"} ref={linkref} />
-              </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Title
+            </label>
+            <Input placeholder="Enter title" ref={titleref} />
+          </div>
 
-              <div>
-                <h1>Type</h1>
-                <div className="flex">
-                  <Button
-                    variant={type === "Youtube" ? "primary" : "secondary"}
-                    text="Youtube"
-                    size="sm"
-                    onClick={() => settype("Youtube")}
-                  />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Link
+            </label>
+            <Input placeholder="Paste YouTube or Twitter link" ref={linkref} />
+          </div>
 
-                  <Button
-                    variant={type === "Twitter" ? "primary" : "secondary"}
-                    text="Twitter"
-                    size="sm"
-                    onClick={() => settype("Twitter")}
-                  />
-                </div>
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Content Type
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => settype("Youtube")}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  type === "Youtube"
+                    ? "border-purple-600 bg-purple-50 text-purple-700"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="text-2xl mb-1">🎥</div>
+                <div className="font-medium">YouTube</div>
+              </button>
+              <button
+                onClick={() => settype("Twitter")}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  type === "Twitter"
+                    ? "border-purple-600 bg-purple-50 text-purple-700"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="text-2xl mb-1">🐦</div>
+                <div className="font-medium">Twitter</div>
+              </button>
+            </div>
+          </div>
 
-              <div className="flex justify-center">
-                <Button
-                  variant="primary"
-                  text="Submit "
-                  size="md"
-                  onClick={addcontent}
-                />
-              </div>
-            </span>
+          <div className="pt-4">
+            <Button
+              variant="primary"
+              text={loading ? "Adding..." : "Add Content"}
+              size="md"
+              onClick={addcontent}
+              disabled={loading}
+            />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
