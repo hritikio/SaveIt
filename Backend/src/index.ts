@@ -3,21 +3,16 @@ dotenv.config();
 import express from "express";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-import { contentModel, UserModel, shareModel } from "./db";
+import { contentModel, UserModel } from "./db";
 import { z } from "zod";
 import * as bcrypt from "bcrypt";
 import { Auth } from "./Authenticate";
 import cors from "cors";
 
-
-
 const app = express();
 app.use(express.json());
 
-
-
 app.use(cors());
-
 
 app.post("/api/v1/signup", async (req, res) => {
   const check_correct_format = z.object({
@@ -207,128 +202,6 @@ app.delete("/api/v1/content", Auth, async (req, res) => {
     });
   }
 });
-
-app.post("/api/v1/brain/share", Auth, async (req, res) => {
-  const check_share_format = z.object({
-    contentid: z.string("enter string value"),
-  });
-
-  const check_format = check_share_format.safeParse(req.body);
-
-  if (!check_format.success) {
-    return res.status(401).json({
-      msg: "invalid format ",
-      err: check_format.error,
-    });
-  }
-
-  //check is contentid belongs to user or not
-
-  try {
-    const user = await contentModel.findOne({
-      _id: check_format.data.contentid,
-      //@ts-ignore
-      userid: req.userid,
-    });
-    console.log("user is ", user);
-
-    if (!user) {
-      return res.status(404).json({
-        msg: "content not found for user",
-      });
-    }
-
-    const already_share = await shareModel.findOne({
-      content: check_format.data.contentid,
-      //@ts-ignore
-      creator: req.userid,
-    });
-
-    if (already_share) {
-      return res.json({
-        msg: "Link is already shared",
-      });
-    }
-
-    const link = sharestring(10);
-
-    console.log("link is", link);
-
-    const createshare = await shareModel.create({
-      share: link,
-      content: check_format.data.contentid,
-      //@ts-ignore
-      creator: req.userid,
-    });
-
-    console.log("creator share is ", createshare);
-
-    res.json({
-      msg: "content shared successfully",
-      link,
-    });
-  } catch (e) {
-    res.status(501).json({
-      msg: "failed to share content",
-      err: e,
-    });
-  }
-});
-
-
-
-
-//generate a share string
-function sharestring(length: number) {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-
-  for (let i = 0; i < length; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return result;
-}
-
-// const demo = sharestring(10);
-// console.log(demo);
-
-
-app.get("/api/v1/brain/:sharelink", async (req, res) => {
-  const sharelink = req.params.sharelink; 
-
-  try{
-    const sharedata=await shareModel.findOne({
-      share:sharelink
-    }).populate({path:"content"}).populate({
-        path:"creator",
-        select:"username"
-      })
-      console.log("sharedata is ",sharedata);
-    
-
-    if(!sharedata){
-      return res.status(403).json({
-        msg:"invalid link"
-      })}
-
-
-      res.json({
-        msg:"the shared content is ",
-        sharedata
-      })
-
-
-
-    }
-  
-  catch(err){
-    res.status(403).json({
-      msg:"Error occured ",
-      err
-    })
-  }
-});
-
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
